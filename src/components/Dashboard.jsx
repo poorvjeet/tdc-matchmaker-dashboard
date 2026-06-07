@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomerCard from './CustomerCard';
+import SettingsModal from './SettingsModal';
 import { filterCustomers } from '../utils/matchingLogic';
+import { isGeminiConfigured } from '../utils/geminiApi';
 import customerData from '../data/customers.json';
 
 const Dashboard = () => {
@@ -14,6 +16,8 @@ const Dashboard = () => {
   const [filterCaste, setFilterCaste] = useState('');
   const [filterReligion, setFilterReligion] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiReady, setAiReady] = useState(false);
 
   useEffect(() => {
     // Check auth
@@ -43,6 +47,10 @@ const Dashboard = () => {
       localStorage.setItem('tdc_customers', JSON.stringify(defaultCustomers));
     }
   }, [navigate]);
+
+  useEffect(() => {
+    setAiReady(isGeminiConfigured());
+  }, [settingsOpen]);
 
   // Extract unique filter options
   const cities = [...new Set(customers.map(c => c.city).filter(Boolean))].sort();
@@ -86,7 +94,19 @@ const Dashboard = () => {
               The Decent Company Matchmaker
             </span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              title={aiReady ? 'Gemini AI is configured' : 'Click to add your Gemini API key'}
+              className={`text-xs px-3 py-1.5 rounded transition font-medium flex items-center gap-1 ${
+                aiReady
+                  ? 'bg-emerald/10 text-emerald hover:bg-emerald/20'
+                  : 'bg-saffron/10 text-saffron hover:bg-saffron/20 animate-pulse'
+              }`}
+            >
+              <span>⚙</span>
+              <span>{aiReady ? 'AI Ready' : 'Setup AI'}</span>
+            </button>
             <div className="hidden md:flex flex-col text-right">
               <span className="text-xs text-gray-400 font-semibold uppercase">Operator</span>
               <span className="text-sm text-gray-600 font-medium">{userEmail}</span>
@@ -245,6 +265,11 @@ const Dashboard = () => {
           )}
         </div>
       </main>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 };

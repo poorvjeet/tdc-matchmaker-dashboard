@@ -1,22 +1,46 @@
 // TDC Matchmaker — Google Gemini AI Integration (free tier)
 // Uses @google/generative-ai SDK. Get a free key at https://aistudio.google.com/apikey
+//
+// Key resolution order:
+//   1. import.meta.env.VITE_GEMINI_API_KEY  (set at build time in Vercel/Netlify)
+//   2. localStorage 'tdc_gemini_key'         (set at runtime via Settings prompt)
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const SYSTEM_PROMPT = `You are a warm, professional matchmaker at TDC — The Date Crew, a premium Indian matchmaking service. You write personalized, emotionally intelligent match explanations and introductions. You never sound robotic. You always sound like a thoughtful human matchmaker who understands Indian family values, modern ambitions, and the importance of compatibility across culture, lifestyle, and goals. Keep responses concise, warm, and specific to the two people being described.`;
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const ENV_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const LS_KEY = 'tdc_gemini_key';
+
+export const getApiKey = () => {
+  // env-var-baked key takes priority; else localStorage fallback
+  if (ENV_KEY && ENV_KEY !== 'your_gemini_api_key_here') return ENV_KEY;
+  try {
+    const stored = localStorage.getItem(LS_KEY);
+    if (stored && stored.trim()) return stored.trim();
+  } catch (e) {
+    /* localStorage unavailable */
+  }
+  return null;
+};
+
+export const setApiKey = (key) => {
+  if (!key) localStorage.removeItem(LS_KEY);
+  else localStorage.setItem(LS_KEY, key.trim());
+  // reset cached model so next call uses the new key
+  _model = null;
+};
 
 let _genAI = null;
 let _model = null;
 
 const getModel = () => {
   if (_model) return _model;
-  if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
-    throw new Error('VITE_GEMINI_API_KEY is not set. Add it to your .env file.');
+  const key = getApiKey();
+  if (!key) {
+    throw new Error('No Gemini API key configured. Click ⚙ Settings to add one.');
   }
-  _genAI = new GoogleGenerativeAI(API_KEY);
-  // gemini-2.0-flash is fast + free tier. Fallback to 1.5-flash if needed.
+  _genAI = new GoogleGenerativeAI(key);
   _model = _genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     systemInstruction: SYSTEM_PROMPT
@@ -24,7 +48,6 @@ const getModel = () => {
   return _model;
 };
 
-// Helper to format a profile into a compact prompt snippet.
 const profileToText = (p) => `
 Name: ${p.firstName} ${p.lastName} (${p.gender}, ${p.age}, ${p.height}cm)
 City: ${p.city} | Religion: ${p.religion} | Caste: ${p.caste}
@@ -54,7 +77,7 @@ ${profileToText(target)}`;
     const result = await model.generateContent(prompt);
     return result.response.text().trim();
   } catch (err) {
-    console.error('Gemini explanation error:', err);
+    console.error('Gemini explanation error:', err.message);
     return `Based on shared values around family, lifestyle, and life goals, ${customer.firstName} and ${target.firstName} show strong compatibility (${score}/100). Their backgrounds complement each other well, making this a ${category.toLowerCase()} worth exploring further.`;
   }
 };
@@ -76,7 +99,7 @@ ${profileToText(target)}`;
     const result = await model.generateContent(prompt);
     return result.response.text().trim();
   } catch (err) {
-    console.error('Gemini intro email error:', err);
+    console.error('Gemini intro email error:', err.message);
     return `Dear ${customer.firstName} and ${target.firstName},
 
 I hope this note finds you both well. After spending time with each of you, I felt a quiet confidence that you two should meet. ${customer.firstName}'s warmth and ${target.firstName}'s grounded nature create a balance I often see in lasting partnerships. Your shared values around family, lifestyle, and life goals stood out to me — and I think a conversation would be meaningful.
@@ -88,12 +111,12 @@ Your Matchmaker at TDC — The Date Crew`;
   }
 };
 
-export const isGeminiConfigured = () => {
-  return Boolean(API_KEY) && API_KEY !== 'your_gemini_api_key_here';
-};
+export const isGeminiConfigured = () => Boolean(getApiKey());
 
 export default {
   getMatchExplanation,
   generateIntroEmail,
-  isGeminiConfigured
+  isGeminiConfigured,
+  getApiKey,
+  setApiKey
 };

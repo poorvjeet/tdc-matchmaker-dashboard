@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { scoreMatch, getTopMatches, filterProfiles } from '../utils/matchingLogic';
+import { isGeminiConfigured } from '../utils/geminiApi';
 import customerData from '../data/customers.json';
 import matchPoolData from '../data/matchPool.json';
 import NotesPanel from './NotesPanel';
 import MatchCard from './MatchCard';
 import MatchModal from './MatchModal';
+import SettingsModal from './SettingsModal';
 
 const STATUS_COLORS = {
   New: 'bg-cream text-burgundy border border-burgundy/20',
@@ -50,6 +52,8 @@ const CustomerDetailView = () => {
   const [religion, setReligion] = useState('');
   const [caste, setCaste] = useState('');
   const [diet, setDiet] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiReady, setAiReady] = useState(isGeminiConfigured());
 
   useEffect(() => {
     const auth = localStorage.getItem('tdc_auth');
@@ -187,6 +191,19 @@ const CustomerDetailView = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 mt-8">
+        {!aiReady && (
+          <div className="mb-4 bg-saffron/10 border border-saffron/30 text-burgundy rounded-lg px-4 py-3 flex items-center justify-between text-sm">
+            <span>
+              <strong>AI features are off.</strong> Add your free Gemini API key to enable match explanations and personalized intro emails.
+            </span>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="bg-burgundy text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-burgundy-dark"
+            >
+              Add API Key
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* ============= LEFT COLUMN: Biodata + Notes ============= */}
           <div className="xl:col-span-1 space-y-6">
@@ -402,6 +419,15 @@ const CustomerDetailView = () => {
         customer={customer}
         match={activeMatch}
         onSent={handleMatchSent}
+      />
+
+      {/* Settings (API key) modal */}
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false);
+          setAiReady(isGeminiConfigured());
+        }}
       />
     </div>
   );
