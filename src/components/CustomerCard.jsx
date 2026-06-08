@@ -22,7 +22,7 @@ const CustomerCard = ({ customer, getStatusColor }) => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center">
           <div className="w-12 h-12 bg-burgundy text-white rounded-full flex items-center justify-center font-bold mr-3">
-            {customer.name.split(' ').map(n => n[0]).join('')}
+            {(customer.name || `${customer.firstName} ${customer.lastName}`).split(' ').map(n => n[0]).join('')}
           </div>
           <div>
             <h3 className="font-playfair text-lg font-semibold text-burgundy">

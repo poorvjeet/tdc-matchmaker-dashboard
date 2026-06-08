@@ -61,17 +61,24 @@ const CustomerDetailView = () => {
       navigate('/login');
       return;
     }
-    // Load or initialize customer from localStorage
+    // Load or initialize customer from localStorage (merge new JSON profiles)
     const stored = localStorage.getItem('tdc_customers');
+    const defaultCustomers = customerData.customers.map((c) => ({
+      ...c,
+      name: c.name || `${c.firstName} ${c.lastName}`.trim(),
+      status: c.status || 'New'
+    }));
     let customers = [];
     if (stored) {
       customers = JSON.parse(stored);
+      const existingIds = new Set(customers.map(c => c.id));
+      const newOnes = defaultCustomers.filter(c => !existingIds.has(c.id));
+      if (newOnes.length > 0) {
+        customers = [...customers, ...newOnes];
+        localStorage.setItem('tdc_customers', JSON.stringify(customers));
+      }
     } else {
-      customers = customerData.customers.map((c) => ({
-        ...c,
-        name: c.name || `${c.firstName} ${c.lastName}`.trim(),
-        status: c.status || 'New'
-      }));
+      customers = defaultCustomers;
       localStorage.setItem('tdc_customers', JSON.stringify(customers));
     }
     const found = customers.find((c) => c.id === id);

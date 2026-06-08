@@ -35,14 +35,24 @@ const Dashboard = () => {
 
     // Load customers from localStorage or initialize from customers.json
     const savedCustomers = localStorage.getItem('tdc_customers');
+    const defaultCustomers = customerData.customers.map(c => ({
+      ...c,
+      name: c.name || `${c.firstName} ${c.lastName}`.trim(),
+      status: c.status || 'New'
+    }));
+
     if (savedCustomers) {
-      setCustomers(JSON.parse(savedCustomers));
+      const parsed = JSON.parse(savedCustomers);
+      const existingIds = new Set(parsed.map(c => c.id));
+      const newCustomers = defaultCustomers.filter(c => !existingIds.has(c.id));
+      if (newCustomers.length > 0) {
+        const merged = [...parsed, ...newCustomers];
+        setCustomers(merged);
+        localStorage.setItem('tdc_customers', JSON.stringify(merged));
+      } else {
+        setCustomers(parsed);
+      }
     } else {
-      const defaultCustomers = customerData.customers.map(c => ({
-        ...c,
-        name: c.name || `${c.firstName} ${c.lastName}`.trim(),
-        status: c.status || 'New'
-      }));
       setCustomers(defaultCustomers);
       localStorage.setItem('tdc_customers', JSON.stringify(defaultCustomers));
     }
