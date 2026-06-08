@@ -42,15 +42,20 @@ const Dashboard = () => {
     }));
 
     if (savedCustomers) {
-      const parsed = JSON.parse(savedCustomers);
-      const existingIds = new Set(parsed.map(c => c.id));
-      const newCustomers = defaultCustomers.filter(c => !existingIds.has(c.id));
-      if (newCustomers.length > 0) {
-        const merged = [...parsed, ...newCustomers];
-        setCustomers(merged);
-        localStorage.setItem('tdc_customers', JSON.stringify(merged));
-      } else {
-        setCustomers(parsed);
+      try {
+        const parsed = JSON.parse(savedCustomers);
+        const existingIds = new Set(parsed.map(c => c.id));
+        const newCustomers = defaultCustomers.filter(c => !existingIds.has(c.id));
+        if (newCustomers.length > 0) {
+          const merged = [...parsed, ...newCustomers];
+          setCustomers(merged);
+          localStorage.setItem('tdc_customers', JSON.stringify(merged));
+        } else {
+          setCustomers(parsed);
+        }
+      } catch (e) {
+        setCustomers(defaultCustomers);
+        localStorage.setItem('tdc_customers', JSON.stringify(defaultCustomers));
       }
     } else {
       setCustomers(defaultCustomers);

@@ -70,12 +70,17 @@ const CustomerDetailView = () => {
     }));
     let customers = [];
     if (stored) {
-      customers = JSON.parse(stored);
-      const existingIds = new Set(customers.map(c => c.id));
-      const newOnes = defaultCustomers.filter(c => !existingIds.has(c.id));
-      if (newOnes.length > 0) {
-        customers = [...customers, ...newOnes];
-        localStorage.setItem('tdc_customers', JSON.stringify(customers));
+      try {
+        customers = JSON.parse(stored);
+        const existingIds = new Set(customers.map(c => c.id));
+        const newOnes = defaultCustomers.filter(c => !existingIds.has(c.id));
+        if (newOnes.length > 0) {
+          customers = [...customers, ...newOnes];
+          localStorage.setItem('tdc_customers', JSON.stringify(customers));
+        }
+      } catch (e) {
+        customers = defaultCustomers;
+        localStorage.setItem('tdc_customers', JSON.stringify(defaultCustomers));
       }
     } else {
       customers = defaultCustomers;

@@ -97,7 +97,7 @@ const professionScore = (prof) => {
   const p = norm(prof);
   if (!p) return 0.5;
   if (/(doctor|surgeon|specialist)/.test(p)) return 1;
-  if (/(ca |chartered accountant|cfa)/.test(p)) return 0.95;
+  if (/(\bca\b|chartered accountant|cfa)/.test(p)) return 0.95;
   if (/(engineer|developer|architect|scientist|professor|researcher)/.test(p)) return 0.85;
   if (/(iim|xlri|isb|mba|product|manager|director|vp|head|lead)/.test(p)) return 0.9;
   if (/(entrepreneur|founder|startup)/.test(p)) return 0.75;
